@@ -9,13 +9,18 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Remove NDK config
+      - name: Fix build files
         run: |
-          sed -i '/ndk.dir/d' local.properties 2>/dev/null || true
-          sed -i '/ndkVersion/d' app/build.gradle 2>/dev/null || true
-      - run: chmod +x gradlew && ./gradlew assembleDebug
+          sed -i '/ndkVersion/d' app/build.gradle
+          sed -i '/ndk {/,/}/d' app/build.gradle
+          echo "sdk.dir=/usr/local/lib/android/sdk" > local.properties
+          echo "ndk.dir=" >> local.properties
+          unset ANDROID_NDK_HOME
+      - name: Build
+        run: |
+          unset ANDROID_NDK_HOME
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: kode-in-debug
